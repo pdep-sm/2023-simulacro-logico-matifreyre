@@ -13,10 +13,48 @@ camino(abasto_shopping, cementerio_recoleta, 27, 32).
  * mejorTour/2 relaciona un tiempo límite con un tour que se puede hacer dentro del mismo.
  * Debe ser inversible para el tour.
  * */
-mejorTour(a, b).
+% mejorTour(a, b).
+mejorTour(Limite, Tour):-
+    secuenciaEnTiempo(Tour, Limite, Paradas),
+    not((secuenciaEnTiempo(_, Limite, Paradas2), Paradas2 > Paradas)).
+
+caminoNoDirigido(GymA, GymB, Duracion, Cantidad):-
+    camino(GymA, GymB, Duracion, Cantidad).    
+caminoNoDirigido(GymA, GymB, Duracion, Cantidad):-
+    camino(GymB, GymA, Duracion, Cantidad).    
+
+secuenciaEnTiempo(Gimnasios, TiempoTotal, PokeparadasEncontradas):-
+    findall(Gym, gimnasio(Gym), Gyms),
+    permutation(Gyms, Gimnasios),
+    tour(Gimnasios, TiempoTranscurrido, PokeparadasEncontradas),
+    TiempoTranscurrido =< TiempoTotal.
+
+gimnasio(Gym):-
+    distinct(Gym, caminoNoDirigido(Gym,_,_,_)).
+
+tour([_], 0, 0).
+tour([GymA, GymB | Gyms], TiempoTour, ParadasTour):-
+    caminoNoDirigido(GymA, GymB, Tiempo, Paradas),
+    tour([GymB | Gyms], TiempoResto, ParadasResto),
+    TiempoTour is Tiempo + TiempoResto,
+    ParadasTour is Paradas + ParadasResto.
 
 /**
  * estaSitiado/1 se cumple (o no) para un gimnasio. 
  * Debe ser inversible. 
  * */
-estaSitiado(a).
+color(abasto_shopping, rojo).
+color(congreso, azul).
+color(cementerio_recoleta, amarillo).
+color(teatro_colon, amarillo).
+color(plaza_de_mayo, amarillo).
+
+estaSitiado(Gym):-
+    color(Gym, Color),
+    vecino(Gym, Vecino),
+    color(Vecino, ColorVecino),
+    Color \= ColorVecino,
+    forall(vecino(Gym, Vecino2), color(Vecino2, ColorVecino)).
+
+vecino(Gym, Vecino):-
+    caminoNoDirigido(Gym, Vecino, _ , _ ).
